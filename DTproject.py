@@ -2,12 +2,12 @@ from dotenv import load_dotenv
 import streamlit as st
 import os
 import PyPDF2
+import base64
 import google.generativeai as genai
 
 load_dotenv()
 
-
-os.environ["GOOGLE_API_KEY"] = "apikey"
+os.environ["GOOGLE_API_KEY"] = "AIzaSyBU4eFgRPl4xyAr1ISDor0zEFEB-8XD_j0"
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
 st.set_page_config(page_title="GEN-AI MINIONS")
@@ -16,16 +16,20 @@ st.header("GEN-AI MINIONS")
 
 def get_gemini_response(input_text, pdf_content, prompt):
     try:
+        
         model = genai.GenerativeModel(model_name="gemini-1.5-flash")  
+        
+        
         response = model.generate_content([input_text, pdf_content, prompt])
-        return response.result  
+        
+        
+        if hasattr(response, 'result'):
+            return response.result  
+        else:
+            return f"Unexpected response structure: {response}"  
     except Exception as e:
         return f"Error fetching response from Gemini API: {e}"
-    
-        return response.messages[-1]['content']  
-    except Exception as e:
-        st.error(f"Error fetching response from Gemini API: {e}")
-        return None
+
 
 def input_pdf_setup(uploaded_file):
     try:
@@ -64,15 +68,16 @@ Your task is to evaluate the resume against the provided job description. Provid
 the job description. First, the output should come as a percentage, followed by missing keywords, and lastly, your final thoughts.
 """
 
+
 if submit1 or submit3:
     if uploaded_file:
         pdf_content = input_pdf_setup(uploaded_file)
         if pdf_content:
             prompt = input_prompt1 if submit1 else input_prompt3
-            response = get_gemini_response(prompt,input_text,pdf_content)
+            response = get_gemini_response(input_text, pdf_content, prompt)
             if response:
                 st.subheader("The Response is:")
-                st.write(response)  
+                st.write(response)
             else:
                 st.error("Failed to fetch the response. Please try again.")
     else:
