@@ -7,7 +7,7 @@ import google.generativeai as genai
 load_dotenv()
 
 
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBU4eFgRPl4xyAr1ISDor0zEFEB-8XD_j0"
+os.environ["GOOGLE_API_KEY"] = "apikey"
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
 st.set_page_config(page_title="GEN-AI MINIONS")
