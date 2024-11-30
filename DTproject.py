@@ -16,12 +16,11 @@ st.header("GEN-AI MINIONS")
 
 def get_gemini_response(input_text, pdf_content, prompt):
     try:
-        model="gemini-1.5-flash", 
-        response = model.generate_content(messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": f"Job Description: {input_text}\nResume Content: {pdf_content}"}
-            ]
-        )
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash")  
+        response = model.generate_content([input_text, pdf_content, prompt])
+        return response.result  
+    except Exception as e:
+        return f"Error fetching response from Gemini API: {e}"
     
         return response.messages[-1]['content']  
     except Exception as e:
