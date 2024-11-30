@@ -1,5 +1,4 @@
 from dotenv import load_dotenv
-import base64
 import streamlit as st
 import os
 import PyPDF2
@@ -7,17 +6,24 @@ import google.generativeai as genai
 
 load_dotenv()
 
+
 os.environ["GOOGLE_API_KEY"] = "AIzaSyBU4eFgRPl4xyAr1ISDor0zEFEB-8XD_j0"
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
-st.set_page_config(page_title="ATS Resume Expert")
+st.set_page_config(page_title="GEN-AI MINIONS")
 st.header("GEN-AI MINIONS")
+
 
 def get_gemini_response(input_text, pdf_content, prompt):
     try:
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")  
-        response = model.generate_content([input_text, pdf_content, prompt])
-        return response.result  
+        model="gemini-1.5-flash", 
+        response = model.generate_content(messages=[
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": f"Job Description: {input_text}\nResume Content: {pdf_content}"}
+            ]
+        )
+    
+        return response.messages[-1]['content']  
     except Exception as e:
         st.error(f"Error fetching response from Gemini API: {e}")
         return None
@@ -34,12 +40,13 @@ def input_pdf_setup(uploaded_file):
         st.error(f"Error processing PDF: {e}")
         return None
 
-input_text = st.text_area("Job Description:", key="input")
 
+input_text = st.text_area("Job Description:", key="input")
 uploaded_file = st.file_uploader("Upload your resume (PDF):", type=["pdf"])
 
 if uploaded_file:
     st.success("PDF Uploaded Successfully!")
+
 
 submit1 = st.button("Tell Me About the Resume")
 submit2 = st.button("How Can I Improve My Skills")
@@ -63,7 +70,7 @@ if submit1 or submit3:
         pdf_content = input_pdf_setup(uploaded_file)
         if pdf_content:
             prompt = input_prompt1 if submit1 else input_prompt3
-            response = get_gemini_response(input_text, pdf_content, prompt)
+            response = get_gemini_response(prompt,input_text,pdf_content)
             if response:
                 st.subheader("The Response is:")
                 st.write(response)  
