@@ -1,54 +1,55 @@
 from dotenv import load_dotenv
+
+load_dotenv()
+import base64
 import streamlit as st
 import os
 import PyPDF2
-import base64
 import google.generativeai as genai
 
-load_dotenv()
 
-os.environ["GOOGLE_API_KEY"] = "apikey"
+os.environ["GOOGLE_API_KEY"] = "APIkey"
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
-st.set_page_config(page_title="GEN-AI MINIONS")
-st.header("GEN-AI MINIONS")
 
 
 def get_gemini_response(input_text, pdf_content, prompt):
-    try:
-        
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash")  
-        
-        
-        response = model.generate_content([input_text, pdf_content, prompt])
-        
-        
-        if hasattr(response, 'result'):
-            return response.result  
-        else:
-            return f"Unexpected response structure: {response}"  
-    except Exception as e:
-        return f"Error fetching response from Gemini API: {e}"
+    model = genai.GenerativeModel(model_name="gemini-1.5-flash")  
+    response = model.generate_content([input_text, pdf_content, prompt])
+    return response
+
 
 
 def input_pdf_setup(uploaded_file):
-    try:
+    if uploaded_file is not None:
+
         reader = PyPDF2.PdfReader(uploaded_file)
-        pdf_text = ''.join([page.extract_text() for page in reader.pages])
+        pdf_text = ''
         
-        if not pdf_text.strip():
+       
+        for page in reader.pages:
+            pdf_text += page.extract_text() + '\n'  
+        
+        if pdf_text.strip() == '':
             raise ValueError("No text found in the PDF file.")
+        
         return pdf_text
-    except Exception as e:
-        st.error(f"Error processing PDF: {e}")
-        return None
+    else:
+        raise FileNotFoundError("No file uploaded")
 
 
-input_text = st.text_area("Job Description:", key="input")
-uploaded_file = st.file_uploader("Upload your resume (PDF):", type=["pdf"])
+st.set_page_config(page_title="ATS Resume Expert")
+st.header("GEN-AI MINIONS")
 
-if uploaded_file:
-    st.success("PDF Uploaded Successfully!")
+
+input_text = st.text_area("Job Description: ", key="input")
+
+
+uploaded_file = st.file_uploader("Upload your resume (PDF)...", type=["pdf"])
+
+if uploaded_file is not None:
+    st.write("PDF Uploaded Successfully")
+
 
 
 submit1 = st.button("Tell Me About the Resume")
@@ -69,16 +70,20 @@ the job description. First, the output should come as a percentage, followed by 
 """
 
 
-if submit1 or submit3:
-    if uploaded_file:
+if submit1:
+    if uploaded_file is not None:
         pdf_content = input_pdf_setup(uploaded_file)
-        if pdf_content:
-            prompt = input_prompt1 if submit1 else input_prompt3
-            response = get_gemini_response(input_text, pdf_content, prompt)
-            if response:
-                st.subheader("The Response is:")
-                st.write(response)
-            else:
-                st.error("Failed to fetch the response. Please try again.")
+        response = get_gemini_response(input_text, pdf_content, input_prompt1)
+        st.subheader("The Response is")
+        st.write(response.text)  
     else:
-        st.warning("Please upload the resume before proceeding.")
+        st.write("Please upload the resume")
+
+elif submit3:
+    if uploaded_file is not None:
+        pdf_content = input_pdf_setup(uploaded_file)
+        response = get_gemini_response(input_text, pdf_content, input_prompt3)
+        st.subheader("The Response is")
+        st.write(response.text)  
+    else:
+        st.write("Please upload the resume")
